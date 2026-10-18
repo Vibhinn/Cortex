@@ -33,12 +33,13 @@ while True:
                        "track of what they have asked / told you before."
                 ) as stream:
 
-            model_response: list[str] = []
             for text in stream.text_stream:
                 print(text, end="", flush=True)
-                model_response.append(text)
+            print("\n")
+            model_response = stream.get_final_message()
+            print(f"in {model_response.usage.input_tokens} | out {model_response.usage.output_tokens} | ~${0.1*model_response.usage.input_tokens/1000000}")
 
         all_user_messages.append({
             "role": "assistant",
-            "content": "".join(model_response)
+            "content": model_response.content
         })
