@@ -11,6 +11,7 @@ anthropic_client: Anthropic = Anthropic(
 all_user_messages: list[dict] = []
 
 while True:
+    print("\n")
     user_input: str = input("Enter message - ")
 
     if user_input == "/quit":
@@ -24,16 +25,20 @@ while True:
 
         all_user_messages.append(new_message)
 
-        model_response = anthropic_client.messages.create(
-            max_tokens=512,
-            messages=all_user_messages,
-            model="claude-haiku-5-5",
-            system="You are a conversational agent. You need to maintain context of user's queries based on what they ask, and keep a "
-                   "track of what they have asked / told you before."
-        )
+        with anthropic_client.messages.stream(
+                max_tokens=512,
+                messages=all_user_messages,
+                model="claude-haiku-5-5",
+                system="You are a conversational agent. You need to maintain context of user's queries based on what they ask, and keep a "
+                       "track of what they have asked / told you before."
+                ) as stream:
 
-        print(model_response.content[-1].text)
+            model_response: list[str] = []
+            for text in stream.text_stream:
+                print(text, end="", flush=True)
+                model_response.append(text)
+
         all_user_messages.append({
             "role": "assistant",
-            "content": model_response.content
+            "content": "".join(model_response)
         })
