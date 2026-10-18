@@ -1,4 +1,6 @@
 import os
+
+import anthropic
 from anthropic import Anthropic
 from dotenv import load_dotenv
 
@@ -17,17 +19,16 @@ while True:
     if user_input == "/quit":
         break
 
-    else:
-        new_message: dict = {
-            "role": "user",
-            "content": user_input
-        }
+    new_message: dict = {
+        "role": "user",
+        "content": user_input
+    }
 
-        all_user_messages.append(new_message)
-
+    all_user_messages.append(new_message)
+    try:
         with anthropic_client.messages.stream(
                 max_tokens=512,
-                messages=all_user_messages,
+                messages=all_user_messages, #type: ignore
                 model="claude-haiku-5-5",
                 system="You are a conversational agent. You need to maintain context of user's queries based on what they ask, and keep a "
                        "track of what they have asked / told you before."
@@ -43,3 +44,11 @@ while True:
             "role": "assistant",
             "content": model_response.content
         })
+    except (
+        anthropic.RateLimitError,
+        anthropic.AuthenticationError,
+        anthropic.APIConnectionError,
+        anthropic.APIStatusError,
+    ) as e:
+        print(f"API error: {e}")
+        all_user_messages.pop()
